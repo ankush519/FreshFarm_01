@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -7,17 +8,28 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userName', user.fullName);
-      localStorage.setItem('userRole', user.role);
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password.');
+    setError('');
+
+    try {
+      const response = await authAPI.login({ email, password });
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        // Open new tab based on user role
+        const role = response.user.role;
+        if (role === 'farmer') {
+          window.open('/farmer-dashboard', '_blank');
+        } else if (role === 'wholesaler') {
+          window.open('/wholesaler-dashboard', '_blank');
+        }
+        navigate('/dashboard');
+      } else {
+        setError(response.message || 'Invalid email or password.');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.');
     }
   };
 

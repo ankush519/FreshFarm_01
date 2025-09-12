@@ -1,49 +1,56 @@
 import { useState, useEffect } from 'react';
+import { productsAPI } from '../services/api.js';
 
 const FreshProduct = () => {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
 
   useEffect(() => {
-    const farmerProducts = JSON.parse(localStorage.getItem('farmerProducts')) || [];
-    if (farmerProducts.length > 0) {
-      const mappedProducts = farmerProducts.map(product => ({
-        ...product,
-        unit: 'Kg',
-        organic: true
-      }));
-      setProducts(mappedProducts);
-    } else {
-      setProducts([
-        {
-          id: 1,
-          name: 'Fresh Tomatoes',
-          category: 'Vegetables',
-          price: 40,
+    const fetchProducts = async () => {
+      try {
+        const data = await productsAPI.getAll();
+        const mappedProducts = data.map(product => ({
+          ...product,
           unit: 'Kg',
-          stock: 50,
-          image: 'https://media.istockphoto.com/id/171579643/photo/tomato-greenhouse.jpg?s=612x612&w=0&k=20&c=BLtIrrBprkZlIHNfSYIhkm3aebVUjqxsS-Yoqa1ss08=',
-          organic: true
-        },
-        {
-          id: 2,
-          name: 'Organic Spinach',
-          category: 'Vegetables',
-          price: 25,
-          unit: 'bunch',
-          stock: 30,
-          image: 'https://media.istockphoto.com/id/1296222786/photo/rows-of-green-spinach-on-a-field.jpg?s=612x612&w=0&k=20&c=RUvD-8aTP1wuxJtv8t1xKxaCGklrRAC5HwvaTBEf4nE=',
-          organic: true
-        }
-      ]);
-    }
+          organic: true,
+          image: product.imageUrl // Map imageUrl to image for consistency
+        }));
+        setProducts(mappedProducts);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        // Fallback to default products if API fails
+        setProducts([
+          {
+            id: 1,
+            name: 'Fresh Tomatoes',
+            category: 'Vegetables',
+            price: 40,
+            unit: 'Kg',
+            stock: 50,
+            image: 'https://media.istockphoto.com/id/171579643/photo/tomato-greenhouse.jpg?s=612x612&w=0&k=20&c=BLtIrrBprkZlIHNfSYIhkm3aebVUjqxsS-Yoqa1ss08=',
+            organic: true
+          },
+          {
+            id: 2,
+            name: 'Organic Spinach',
+            category: 'Vegetables',
+            price: 25,
+            unit: 'bunch',
+            stock: 30,
+            image: 'https://media.istockphoto.com/id/1296222786/photo/rows-of-green-spinach-on-a-field.jpg?s=612x612&w=0&k=20&c=RUvD-8aTP1wuxJtv8t1xKxaCGklrRAC5HwvaTBEf4nE=',
+            organic: true
+          }
+        ]);
+      }
+    };
+    fetchProducts();
   }, []);
 
   const filteredProducts = selectedCategory === 'All Categories' ? products : products.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
 
   const addToCart = (product) => {
     const cart = JSON.parse(localStorage.getItem('farmFreshCart')) || [];
-    const existingItem = cart.find(item => item.id === product.id);
+    const existingItem = cart.find(item => item._id === product._id);
     if (existingItem) {
       existingItem.quantity = (existingItem.quantity || 1) + 1;
     } else {
@@ -92,7 +99,7 @@ const FreshProduct = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredProducts.map(product => (
-            <div key={product.id} className="card">
+            <div key={product._id} className="card">
               <div className="relative">
                 <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
                 {product.organic && <span className="absolute top-3 left-3 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">Organic</span>}

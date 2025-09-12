@@ -1,4 +1,9 @@
-# TODO: Add Browse Farm, Fresh Products, Subscriptions as Navbar
+# TODO: Implement Role-Based New Tab Opening After Login
 
-- [x] Update desktop navbar links in Header.jsx to "Browse Farm", "Fresh Products", "Subscriptions"
-- [x] Update mobile navbar links in Header.jsx to "Browse Farm", "Fresh Products", "Subscriptions"
+## Tasks
+- [x] Modify Login.jsx to open new tab with role-specific dashboard after successful login
+- [x] Remove navigation links from dashboards and move to Header.jsx with role-based display
+- [x] Update Header.jsx to show role-specific navigation links
+
+## Completed
+- [x] Plan approved by user

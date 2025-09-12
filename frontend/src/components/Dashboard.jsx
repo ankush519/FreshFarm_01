@@ -7,13 +7,13 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const storedUserName = localStorage.getItem('userName');
-    const storedUserRole = localStorage.getItem('userRole');
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
 
-    if (isLoggedIn === 'true' && storedUserName) {
-      setUserName(storedUserName);
-      setUserRole(storedUserRole);
+    if (token && userData) {
+      const user = JSON.parse(userData);
+      setUserName(user.fullName);
+      setUserRole(user.role);
     } else {
       // If not logged in, redirect to login
       navigate('/login');
@@ -21,9 +21,8 @@ const Dashboard = () => {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/sign-up');
   };
 

@@ -12,13 +12,16 @@
 - [x] Create .env.example
 - [x] Install dependencies
 
-## Testing
+## Testing & Integration
 - [ ] Set up MongoDB (local or cloud)
 - [ ] Create .env file with MONGODB_URI, JWT_SECRET, PORT
 - [ ] Run server with `npm run dev`
 - [ ] Test auth endpoints with Postman or curl
 - [ ] Test product endpoints
-- [ ] Integrate with frontend (replace localStorage with API calls)
+- [x] Integrate authentication with frontend (JWT tokens)
+- [ ] Integrate products with frontend (replace localStorage)
+- [ ] Add cart/order management endpoints
+- [ ] Add subscription management endpoints
 
 ## Additional Features
 - [x] Add role selection (farmer/wholesaler) to signup

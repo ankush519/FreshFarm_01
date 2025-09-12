@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
 
 const SignUp = () => {
   const [fullName, setFullName] = useState('');
@@ -10,24 +11,22 @@ const SignUp = () => {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setSuccess('');
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const existingUser = users.find(user => user.email === email);
-    if (existingUser) {
-      setError('An account with this email already exists.');
-      return;
+
+    try {
+      const response = await authAPI.register({ fullName, email, password, role });
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setSuccess('Sign up successful! Redirecting to login-page...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+    } catch (error) {
+      setError(error.message);
     }
-    users.push({ fullName, email, password, role });
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userName', fullName);
-    localStorage.setItem('userRole', role);
-    setSuccess('Sign up successful! Redirecting to login...');
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
   };
 
   return (

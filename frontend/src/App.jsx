@@ -7,8 +7,12 @@ import BrowseFarm from './components/BrowseFarm.jsx';
 import FreshProduct from './components/FreshProduct.jsx';
 import Subscription from './components/Subscription.jsx';
 import Cart from './components/Cart.jsx';
+import OrderHistory from './components/OrderHistory.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import FarmerDashboard from './components/FarmerDashboard.jsx';
+import WholesalerDashboard from './components/WholesalerDashboard.jsx';
+import Chatbot from './components/Chatbot.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 const App = () => {
   return (
@@ -18,13 +22,16 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/sign-up" element={<SignUp />} />
-        <Route path="/browse-farm" element={<BrowseFarm />} />
-        <Route path="/fresh-product" element={<FreshProduct />} />
-        <Route path="/subscription" element={<Subscription />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
+        <Route path="/browse-farm" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><BrowseFarm /></ProtectedRoute>} />
+        <Route path="/fresh-product" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><FreshProduct /></ProtectedRoute>} />
+        <Route path="/subscription" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><Subscription /></ProtectedRoute>} />
+        <Route path="/cart" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><Cart /></ProtectedRoute>} />
+        <Route path="/order-history" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><OrderHistory /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><Dashboard /></ProtectedRoute>} />
+        <Route path="/farmer-dashboard" element={<ProtectedRoute allowedRoles={['farmer']}><FarmerDashboard /></ProtectedRoute>} />
+        <Route path="/wholesaler-dashboard" element={<ProtectedRoute allowedRoles={['wholesaler']}><WholesalerDashboard /></ProtectedRoute>} />
       </Routes>
+      <Chatbot />
     </>
   );
 };

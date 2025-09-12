@@ -15,7 +15,13 @@ const Header = () => {
   const [signUpError, setSignUpError] = useState('');
   const [signUpSuccess, setSignUpSuccess] = useState('');
   const [cartCount, setCartCount] = useState(0);
+  const [user, setUser] = useState({});
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(storedUser);
+  }, []);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -32,38 +38,45 @@ const Header = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.email === loginEmail && u.password === loginPassword);
-    if (user) {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userName', user.fullName);
+    setLoginError('');
+
+    try {
+      const { authAPI } = await import('../services/api');
+      const data = await authAPI.login({ email: loginEmail, password: loginPassword });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       setShowLoginModal(false);
       navigate('/dashboard');
-    } else {
-      setLoginError('Invalid email or password.');
+    } catch (error) {
+      setLoginError(error.message);
     }
   };
 
-  const handleSignUpSubmit = (e) => {
+  const handleSignUpSubmit = async (e) => {
     e.preventDefault();
+    setSignUpError('');
     setSignUpSuccess('');
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const existingUser = users.find(user => user.email === signUpEmail);
-    if (existingUser) {
-      setSignUpError('An account with this email already exists.');
-      return;
+
+    try {
+      const { authAPI } = await import('../services/api');
+      const data = await authAPI.register({
+        fullName: signUpFullName,
+        email: signUpEmail,
+        password: signUpPassword,
+        role: 'farmer' // Default role
+      });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setSignUpSuccess('Sign up successful! Redirecting to dashboard...');
+      setTimeout(() => {
+        setShowSignUpModal(false);
+        navigate('/dashboard');
+      }, 1500);
+    } catch (error) {
+      setSignUpError(error.message);
     }
-    users.push({ fullName: signUpFullName, email: signUpEmail, password: signUpPassword });
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userName', signUpFullName);
-    setSignUpSuccess('Sign up successful! Redirecting to dashboard...');
-    setTimeout(() => {
-      setShowSignUpModal(false);
-      navigate('/dashboard');
-    }, 1500);
   };
 
   return (
@@ -75,44 +88,130 @@ const Header = () => {
             <span className="text-2xl font-bold text-brand-green">FarmFresh</span>
           </Link>
           <div className="sm:flex items-center space-x-8">
-            <Link to="/browse-farm" className="nav-link font-medium">Browse Farm</Link>
-            <Link to="/fresh-product" className="nav-link font-medium">Fresh Products</Link>
-            <Link to="/subscription" className="nav-link font-medium">Subscriptions</Link>
-            <Link to="/farmer-dashboard" className="nav-link font-medium">For Farmers</Link>
-            <Link to="/cart" className="nav-link font-medium">Cart ({cartCount})</Link>
+            {localStorage.getItem('token') ? (
+              user.role === 'farmer' ? (
+                <>
+                  <Link to="/order-history" className="nav-link font-medium">Order History</Link>
+                  <Link to="/browse-farm" className="nav-link font-medium">Browse Farm</Link>
+                  <Link to="/farmer-dashboard" className="nav-link font-medium">Farmer Dashboard</Link>
+                </>
+              ) : user.role === 'wholesaler' ? (
+                <>
+                  <Link to="/order-history" className="nav-link font-medium">Order History</Link>
+                  <Link to="/browse-farm" className="nav-link font-medium">Browse Farm</Link>
+                  <Link to="/fresh-product" className="nav-link font-medium">Fresh Product</Link>
+                  <Link to="/subscription" className="nav-link font-medium">Subscriptions</Link>
+                  <Link to="/cart" className="nav-link font-medium">Cart ({cartCount})</Link>
+                  <Link to="/wholesaler-dashboard" className="nav-link font-medium">Wholesaler Dashboard</Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/browse-farm" className="nav-link font-medium">Browse Farm</Link>
+                  <Link to="/fresh-product" className="nav-link font-medium">Fresh Products</Link>
+                  <Link to="/subscription" className="nav-link font-medium">Subscriptions</Link>
+                  <Link to="/order-history" className="nav-link font-medium">Order History</Link>
+                  <Link to="/farmer-dashboard" className="nav-link font-medium">For Farmers</Link>
+                  <Link to="/wholesaler-dashboard" className="nav-link font-medium">For Wholesalers</Link>
+                  <Link to="/cart" className="nav-link font-medium">Cart ({cartCount})</Link>
+                </>
+              )
+            ) : (
+              <>
+                <Link to="/browse-farm" className="nav-link font-medium">Browse Farm</Link>
+                <Link to="/fresh-product" className="nav-link font-medium">Fresh Products</Link>
+                <Link to="/subscription" className="nav-link font-medium">Subscriptions</Link>
+                <Link to="/order-history" className="nav-link font-medium">Order History</Link>
+                <Link to="/farmer-dashboard" className="nav-link font-medium">For Farmers</Link>
+                <Link to="/wholesaler-dashboard" className="nav-link font-medium">For Wholesalers</Link>
+                <Link to="/cart" className="nav-link font-medium">Cart ({cartCount})</Link>
+              </>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             <a href="https://www.google.com/maps/place/Chitkara University,+Rajpura,+Patiala,+Punjab,+India" target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center space-x-1 nav-link">
               <i className="fas fa-map-marker-alt"></i>
               <span>Punjab, PB</span>
             </a>
+          {localStorage.getItem('token') ? (
+            <>
+              <button onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.reload();
+              }} className="nav-link flex items-center space-x-2">
+                <i className="fas fa-sign-out-alt"></i>
+                <span className="hidden lg:inline ml-2">Logout</span>
+              </button>
+            </>
+          ) : (
             <button onClick={() => setShowLoginModal(true)} className="nav-link">
               <i className="fas fa-user"></i>
               <span className="hidden lg:inline ml-2">Sign In</span>
             </button>
-            <Link to="/cart" className="nav-link relative">
-              <i className="fas fa-shopping-cart"></i>
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-brand-orange text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            <Link to="/farmer-dashboard" className="hidden sm:inline-block btn btn-primary text-sm px-4 py-2">Join as Farmer</Link>
-            <button id="mobile-menu-button" onClick={toggleMobileMenu} className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-green">
-              <i className="fas fa-bars text-xl"></i>
-            </button>
+          )}
+          <Link to="/cart" className="nav-link relative">
+            <i className="fas fa-shopping-cart"></i>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-brand-orange text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+          <Link to="/farmer-dashboard" className="hidden sm:inline-block btn btn-primary text-sm px-4 py-2">Join as Farmer</Link>
+          <button id="mobile-menu-button" onClick={toggleMobileMenu} className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-green">
+            <i className="fas fa-bars text-xl"></i>
+          </button>
           </div>
         </nav>
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div id="mobile-menu" className="md:hidden px-6 pb-4 space-y-2">
-            <Link to="/browse-farm" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Browse Farm</Link>
-            <Link to="/fresh-product" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Fresh Products</Link>
-            <Link to="/subscription" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Subscriptions</Link>
-            <Link to="/farmer-dashboard" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>For Farmers</Link>
-            <Link to="/cart" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Cart</Link>
-            <button onClick={() => {setMobileMenuOpen(false); setShowLoginModal(true);}} className="block nav-link font-medium">Sign In</button>
+            {localStorage.getItem('token') ? (
+              user.role === 'farmer' ? (
+                <>
+                  <Link to="/order-history" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Order History</Link>
+                  <Link to="/browse-farm" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Browse Farm</Link>
+                  <Link to="/farmer-dashboard" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Farmer Dashboard</Link>
+                </>
+              ) : user.role === 'wholesaler' ? (
+                <>
+                  <Link to="/order-history" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Order History</Link>
+                  <Link to="/browse-farm" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Browse Farm</Link>
+                  <Link to="/fresh-product" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Fresh Product</Link>
+                  <Link to="/subscription" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Subscriptions</Link>
+                  <Link to="/cart" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Cart</Link>
+                  <Link to="/wholesaler-dashboard" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Wholesaler Dashboard</Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/browse-farm" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Browse Farm</Link>
+                  <Link to="/fresh-product" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Fresh Products</Link>
+                  <Link to="/subscription" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Subscriptions</Link>
+                  <Link to="/order-history" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Order History</Link>
+                  <Link to="/farmer-dashboard" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>For Farmers</Link>
+                  <Link to="/cart" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Cart</Link>
+                </>
+              )
+            ) : (
+              <>
+                <Link to="/browse-farm" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Browse Farm</Link>
+                <Link to="/fresh-product" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Fresh Products</Link>
+                <Link to="/subscription" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Subscriptions</Link>
+                <Link to="/order-history" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Order History</Link>
+                <Link to="/farmer-dashboard" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>For Farmers</Link>
+                <Link to="/cart" className="block nav-link font-medium" onClick={() => setMobileMenuOpen(false)}>Cart</Link>
+              </>
+            )}
+            {localStorage.getItem('token') ? (
+              <button onClick={() => {
+                setMobileMenuOpen(false);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.reload();
+              }} className="block nav-link font-medium">Logout</button>
+            ) : (
+              <button onClick={() => {setMobileMenuOpen(false); setShowLoginModal(true);}} className="block nav-link font-medium">Sign In</button>
+            )}
             <Link to="/farmer-dashboard" className="block sm:hidden btn btn-primary mt-2" onClick={() => setMobileMenuOpen(false)}>Join as Farmer</Link>
           </div>
         )}

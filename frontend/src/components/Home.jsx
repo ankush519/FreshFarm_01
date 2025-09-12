@@ -1,4 +1,14 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
 const Home = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
+
   return (
     <main>
       <section id="home">
@@ -9,9 +19,21 @@ const Home = () => {
             <h1 className="text-4xl md:text-6xl font-bold leading-tight">Fresh From Farm<br /><span className="text-brand-orange">Direct To You</span></h1>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl">Connect directly with local farmers. Get the freshest produce while supporting your community.</p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <a href="/fresh-product" className="btn btn-primary">Start Shopping</a>
-              <a href="/farmer-dashboard" className="btn btn-secondary">Sell Your Product</a>
+              {isLoggedIn ? (
+                <>
+                  <Link to="/fresh-product" className="btn btn-primary">Start Shopping</Link>
+                  <Link to="/farmer-dashboard" className="btn btn-secondary">Sell Your Product</Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="btn btn-primary">Login to Start Shopping</Link>
+                  <Link to="/sign-up" className="btn btn-secondary">Join as Farmer</Link>
+                </>
+              )}
             </div>
+            {!isLoggedIn && (
+              <p className="mt-4 text-sm text-gray-300">Please login to access all features of FarmFresh</p>
+            )}
           </div>
         </div>
         <div className="bg-white py-12">

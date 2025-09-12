@@ -14,6 +14,17 @@ const Cart = () => {
     setCart(storedCart);
   }, []);
 
+  const updateQuantity = (index, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeItem(index);
+      return;
+    }
+    const newCart = [...cart];
+    newCart[index].quantity = newQuantity;
+    setCart(newCart);
+    localStorage.setItem('farmFreshCart', JSON.stringify(newCart));
+  };
+
   const removeItem = (index) => {
     showConfirmationModal('Are you sure you want to remove this item?', () => {
       const newCart = [...cart];
@@ -32,15 +43,31 @@ const Cart = () => {
 
   const proceedToPay = () => {
     if (cart.length > 0) {
-      showConfirmationModal('This is a demo. Proceeding will clear your cart as if payment was successful. Continue?', () => {
+      showConfirmationModal('Proceed to payment? This will place your order.', () => {
+        // Create order object
+        const order = {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          items: cart,
+          total: total,
+          status: 'confirmed'
+        };
+
+        // Store order in localStorage
+        const existingOrders = JSON.parse(localStorage.getItem('farmFreshOrders')) || [];
+        existingOrders.push(order);
+        localStorage.setItem('farmFreshOrders', JSON.stringify(existingOrders));
+
+        // Clear cart
         setCart([]);
         localStorage.setItem('farmFreshCart', JSON.stringify([]));
-        setToastMessage('Payment successful! Thank you for your order.');
+
+        setToastMessage('Order placed successfully! Redirecting to order history.');
         setShowToast(true);
         setTimeout(() => {
           setShowToast(false);
-          // Redirect to home page after payment
-          window.location.href = '/';
+          // Redirect to order history
+          window.location.href = '/order-history';
         }, 3000);
       });
     }
@@ -64,7 +91,7 @@ const Cart = () => {
     hideConfirmationModal();
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <>
@@ -109,12 +136,20 @@ const Cart = () => {
                       <img src={item.image || 'https://placehold.co/64x64/cccccc/ffffff?text=Item'} alt={item.name} className="w-16 h-16 object-cover rounded-md" />
                       <div>
                         <p className="font-medium text-lg">{item.name}</p>
-                        <p className="text-sm text-gray-500">₹{item.price.toFixed(2)}</p>
+                        <p className="text-sm text-gray-500">₹{item.price.toFixed(2)} each</p>
                       </div>
                     </div>
-                    <button onClick={() => removeItem(index)} className="text-red-500 hover:underline">
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <button onClick={() => updateQuantity(index, item.quantity - 1)} className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300">-</button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(index, item.quantity + 1)} className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300">+</button>
+                      </div>
+                      <p className="text-lg font-bold text-brand-orange">₹{(item.price * item.quantity).toFixed(2)}</p>
+                      <button onClick={() => removeItem(index)} className="text-red-500 hover:underline">
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
