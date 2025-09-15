@@ -29,7 +29,7 @@ const Login = () => {
         setError(response.message || 'Invalid email or password.');
       }
     } catch (error) {
-      setError('Login failed. Please try again.');
+      setError('Login failed. Please sign-up & try again.');
     }
   };
 

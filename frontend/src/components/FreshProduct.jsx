@@ -4,6 +4,7 @@ import { productsAPI } from '../services/api.js';
 const FreshProduct = () => {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [user, setUser] = useState({});
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -44,20 +45,46 @@ const FreshProduct = () => {
       }
     };
     fetchProducts();
+
+    // Load user from localStorage
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(storedUser);
   }, []);
 
   const filteredProducts = selectedCategory === 'All Categories' ? products : products.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
 
   const addToCart = (product) => {
     const cart = JSON.parse(localStorage.getItem('farmFreshCart')) || [];
-    const existingItem = cart.find(item => item._id === product._id);
-    if (existingItem) {
-      existingItem.quantity = (existingItem.quantity || 1) + 1;
+    if (user.role === 'wholesaler') {
+      let quantityStr = prompt(`Enter quantity in Kg for ${product.name}:`, '1');
+      if (quantityStr === null) {
+        // User cancelled prompt
+        return;
+      }
+      let quantity = parseFloat(quantityStr);
+      if (isNaN(quantity) || quantity <= 0) {
+        alert('Please enter a valid positive number for quantity.');
+        return;
+      }
+      const existingItem = cart.find(item => item._id === product._id);
+      if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 0) + quantity;
+        existingItem.totalPrice = existingItem.quantity * product.price;
+      } else {
+        cart.push({ ...product, quantity: quantity, totalPrice: quantity * product.price });
+      }
+      localStorage.setItem('farmFreshCart', JSON.stringify(cart));
+      alert(`${product.name} (${quantity} Kg) added to cart! Total price: ₹${(quantity * product.price).toFixed(2)}`);
     } else {
-      cart.push({ ...product, quantity: 1 });
+      const existingItem = cart.find(item => item._id === product._id);
+      if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      localStorage.setItem('farmFreshCart', JSON.stringify(cart));
+      alert(`${product.name} added to cart!`);
     }
-    localStorage.setItem('farmFreshCart', JSON.stringify(cart));
-    alert(`${product.name} added to cart!`);
   };
 
   return (
@@ -123,3 +150,4 @@ const FreshProduct = () => {
 };
 
 export default FreshProduct;
+

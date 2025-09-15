@@ -26,7 +26,7 @@ const Header = () => {
   useEffect(() => {
     const updateCartCount = () => {
       const cart = JSON.parse(localStorage.getItem('farmFreshCart')) || [];
-      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const count = cart.length;  // Count distinct items, not sum of quantities
       setCartCount(count);
     };
     updateCartCount();

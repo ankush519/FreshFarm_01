@@ -4,6 +4,7 @@ import Home from './components/Home.jsx';
 import Login from './components/Login.jsx';
 import SignUp from './components/SignUp.jsx';
 import BrowseFarm from './components/BrowseFarm.jsx';
+import FarmDetails from './components/FarmDetails.jsx';
 import FreshProduct from './components/FreshProduct.jsx';
 import Subscription from './components/Subscription.jsx';
 import Cart from './components/Cart.jsx';
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/browse-farm" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><BrowseFarm /></ProtectedRoute>} />
+        <Route path="/farm-details/:farmId" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><FarmDetails /></ProtectedRoute>} />
         <Route path="/fresh-product" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><FreshProduct /></ProtectedRoute>} />
         <Route path="/subscription" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><Subscription /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute allowedRoles={['wholesaler', 'farmer', 'customer']}><Cart /></ProtectedRoute>} />
