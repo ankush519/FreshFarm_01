@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productsAPI } from '../services/api.js';
+import { productsAPI, cartAPI } from '../services/api.js';
 
 const FreshProduct = () => {
   const [products, setProducts] = useState([]);
@@ -53,37 +53,28 @@ const FreshProduct = () => {
 
   const filteredProducts = selectedCategory === 'All Categories' ? products : products.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
 
-  const addToCart = (product) => {
-    const cart = JSON.parse(localStorage.getItem('farmFreshCart')) || [];
-    if (user.role === 'wholesaler') {
-      let quantityStr = prompt(`Enter quantity in Kg for ${product.name}:`, '1');
-      if (quantityStr === null) {
-        // User cancelled prompt
-        return;
-      }
-      let quantity = parseFloat(quantityStr);
-      if (isNaN(quantity) || quantity <= 0) {
-        alert('Please enter a valid positive number for quantity.');
-        return;
-      }
-      const existingItem = cart.find(item => item._id === product._id);
-      if (existingItem) {
-        existingItem.quantity = (existingItem.quantity || 0) + quantity;
-        existingItem.totalPrice = existingItem.quantity * product.price;
+  const addToCart = async (product) => {
+    try {
+      if (user.role === 'wholesaler') {
+        let quantityStr = prompt(`Enter quantity in Kg for ${product.name}:`, '1');
+        if (quantityStr === null) {
+          // User cancelled prompt
+          return;
+        }
+        let quantity = parseFloat(quantityStr);
+        if (isNaN(quantity) || quantity <= 0) {
+          alert('Please enter a valid positive number for quantity.');
+          return;
+        }
+        await cartAPI.addItem(product._id, quantity);
+        alert(`${product.name} (${quantity} Kg) added to cart! Total price: ₹${(quantity * product.price).toFixed(2)}`);
       } else {
-        cart.push({ ...product, quantity: quantity, totalPrice: quantity * product.price });
+        await cartAPI.addItem(product._id, 1);
+        alert(`${product.name} added to cart!`);
       }
-      localStorage.setItem('farmFreshCart', JSON.stringify(cart));
-      alert(`${product.name} (${quantity} Kg) added to cart! Total price: ₹${(quantity * product.price).toFixed(2)}`);
-    } else {
-      const existingItem = cart.find(item => item._id === product._id);
-      if (existingItem) {
-        existingItem.quantity = (existingItem.quantity || 1) + 1;
-      } else {
-        cart.push({ ...product, quantity: 1 });
-      }
-      localStorage.setItem('farmFreshCart', JSON.stringify(cart));
-      alert(`${product.name} added to cart!`);
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      alert('Failed to add item to cart.');
     }
   };
 

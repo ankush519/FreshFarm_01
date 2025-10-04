@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ordersAPI } from '../services/api.js';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    const storedOrders = JSON.parse(localStorage.getItem('farmFreshOrders')) || [];
-    setOrders(storedOrders);
+    const fetchOrders = async () => {
+      try {
+        const ordersData = await ordersAPI.getOrders();
+        setOrders(ordersData || []);
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+        setOrders([]);
+      }
+    };
+    fetchOrders();
   }, []);
 
   return (

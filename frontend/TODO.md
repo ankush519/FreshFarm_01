@@ -1,9 +1,7 @@
-# TODO: Implement Role-Based New Tab Opening After Login
+# TODO: Integrate Frontend with Backend APIs
 
 ## Tasks
-- [x] Modify Login.jsx to open new tab with role-specific dashboard after successful login
-- [x] Remove navigation links from dashboards and move to Header.jsx with role-based display
-- [x] Update Header.jsx to show role-specific navigation links
-
-## Completed
-- [x] Plan approved by user
+- [x] Update Cart.jsx to use backend APIs for cart operations and order placement
+- [x] Update FreshProduct.jsx to use cartAPI.addItem for adding items to cart
+- [x] Update OrderHistory.jsx to fetch orders from backend
+- [x] Update Header.jsx to fetch cart count from backend

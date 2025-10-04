@@ -19,68 +19,161 @@ const authFetch = async (url, options = {}) => {
   });
 };
 
-// Auth API using localStorage
+// Auth API
 export const authAPI = {
   register: async (userData) => {
-    const users = JSON.parse(localStorage.getItem('farmUsers') || '[]');
-    const existingUser = users.find(u => u.email === userData.email);
-    if (existingUser) {
-      throw new Error('User already exists');
+    const response = await authFetch('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Registration failed');
     }
-    const newUser = {
-      ...userData,
-      _id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    users.push(newUser);
-    localStorage.setItem('farmUsers', JSON.stringify(users));
-    localStorage.setItem('token', 'local-' + newUser._id);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    return { token: 'local-' + newUser._id, user: newUser };
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data;
   },
 
   login: async (credentials) => {
-    const users = JSON.parse(localStorage.getItem('farmUsers') || '[]');
-    const user = users.find(u => u.email === credentials.email && u.password === credentials.password);
-    if (!user) {
-      throw new Error('Invalid credentials');
+    const response = await authFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Login failed');
     }
-    localStorage.setItem('token', 'local-' + user._id);
-    localStorage.setItem('user', JSON.stringify(user));
-    return { token: 'local-' + user._id, user };
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data;
   },
 };
 
-// Products API using localStorage
+// Products API
 export const productsAPI = {
   getAll: async () => {
-    const products = JSON.parse(localStorage.getItem('farmProducts') || '[]');
-    return products;
+    const response = await authFetch('/products');
+    if (!response.ok) {
+      throw new Error('Failed to fetch products');
+    }
+    return await response.json();
   },
 
   create: async (productData) => {
-    const products = JSON.parse(localStorage.getItem('farmProducts') || '[]');
-    const newProduct = { ...productData, _id: Date.now().toString(), createdAt: new Date().toISOString() };
-    products.push(newProduct);
-    localStorage.setItem('farmProducts', JSON.stringify(products));
-    return newProduct;
+    const response = await authFetch('/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create product');
+    }
+    return await response.json();
   },
 
   update: async (id, productData) => {
-    const products = JSON.parse(localStorage.getItem('farmProducts') || '[]');
-    const index = products.findIndex(p => p._id === id);
-    if (index !== -1) {
-      products[index] = { ...products[index], ...productData };
-      localStorage.setItem('farmProducts', JSON.stringify(products));
-      return products[index];
+    const response = await authFetch(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update product');
     }
-    throw new Error('Product not found');
+    return await response.json();
   },
 
   delete: async (id) => {
-    const products = JSON.parse(localStorage.getItem('farmProducts') || '[]');
-    const filteredProducts = products.filter(p => p._id !== id);
-    localStorage.setItem('farmProducts', JSON.stringify(filteredProducts));
-    return { message: 'Product deleted' };
+    const response = await authFetch(`/products/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete product');
+    }
+    return await response.json();
+  },
+};
+
+// Cart API
+export const cartAPI = {
+  getCart: async () => {
+    const response = await authFetch('/cart');
+    if (!response.ok) {
+      throw new Error('Failed to fetch cart');
+    }
+    return await response.json();
+  },
+
+  addItem: async (productId, quantity) => {
+    const response = await authFetch('/cart/add', {
+      method: 'POST',
+      body: JSON.stringify({ productId, quantity }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to add item to cart');
+    }
+    return await response.json();
+  },
+
+  updateItem: async (productId, quantity) => {
+    const response = await authFetch(`/cart/update/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update item');
+    }
+    return await response.json();
+  },
+
+  removeItem: async (productId) => {
+    const response = await authFetch(`/cart/remove/${productId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to remove item');
+    }
+    return await response.json();
+  },
+
+  clearCart: async () => {
+    const response = await authFetch('/cart/clear', {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to clear cart');
+    }
+    return await response.json();
+  },
+};
+
+// Orders API
+export const ordersAPI = {
+  getOrders: async () => {
+    const response = await authFetch('/orders');
+    if (!response.ok) {
+      throw new Error('Failed to fetch orders');
+    }
+    return await response.json();
+  },
+
+  createOrder: async (orderData) => {
+    const response = await authFetch('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create order');
+    }
+    return await response.json();
   },
 };

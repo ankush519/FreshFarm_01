@@ -4,6 +4,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
+import cartRoutes from './routes/cart.js';
+import orderRoutes from './routes/orders.js';
 
 dotenv.config();
 
@@ -17,6 +19,8 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGODB_URI, {

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { cartAPI } from '../services/api.js';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -24,10 +25,15 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('farmFreshCart')) || [];
-      const count = cart.length;  // Count distinct items, not sum of quantities
-      setCartCount(count);
+    const updateCartCount = async () => {
+      try {
+        const cartData = await cartAPI.getCart();
+        const count = cartData.items ? cartData.items.length : 0;
+        setCartCount(count);
+      } catch (error) {
+        console.error('Failed to fetch cart count:', error);
+        setCartCount(0);
+      }
     };
     updateCartCount();
     const interval = setInterval(updateCartCount, 1000);
