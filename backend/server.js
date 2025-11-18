@@ -6,8 +6,11 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import cartRoutes from './routes/cart.js';
 import orderRoutes from './routes/orders.js';
+import otpRoutes from './routes/otp.js';
 
 dotenv.config();
+
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/otp', otpRoutes);
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGODB_URI, {

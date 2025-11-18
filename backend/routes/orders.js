@@ -17,16 +17,26 @@ router.get('/', auth, async (req, res) => {
 // Create new order
 router.post('/', auth, async (req, res) => {
   try {
-    const { items, total } = req.body;
+    const { items, total, paymentMethod, gmail } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'Order items are required' });
+    }
+
+    if (!paymentMethod) {
+      return res.status(400).json({ message: 'Payment method is required' });
+    }
+
+    if (!gmail || !gmail.includes('@gmail.com')) {
+      return res.status(400).json({ message: 'Valid Gmail address is required' });
     }
 
     const order = new Order({
       user: req.user,
       items,
       total,
+      paymentMethod,
+      gmail,
       status: 'confirmed',
     });
 

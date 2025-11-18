@@ -34,6 +34,14 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  paymentMethod: {
+    type: String,
+    required: true,
+  },
+  gmail: {
+    type: String,
+    required: true,
+  },
   status: {
     type: String,
     enum: ['confirmed', 'shipped', 'delivered', 'cancelled'],

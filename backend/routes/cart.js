@@ -1,5 +1,6 @@
 import express from 'express';
 import Cart from '../models/Cart.js';
+import Product from '../models/Product.js';
 import auth from '../middleware/auth.js';
 
 const router = express.Router();
@@ -21,6 +22,13 @@ router.get('/', auth, async (req, res) => {
 router.post('/add', auth, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
+
+    // Validate product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     let cart = await Cart.findOne({ user: req.user });
 
     if (!cart) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { cartAPI, ordersAPI } from '../services/api.js';
+import { cartAPI, ordersAPI, otpAPI } from '../services/api.js';
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
@@ -9,6 +9,12 @@ const Cart = () => {
   const [confirmCallback, setConfirmCallback] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [gmail, setGmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -64,33 +70,80 @@ const Cart = () => {
 
   const proceedToPay = () => {
     if (cart.length > 0) {
-      showConfirmationModal('Proceed to payment? This will place your order.', async () => {
-        try {
-          const orderItems = cart.map(item => ({
-            product: item.product._id,
-            name: item.product.name,
-            price: item.product.price,
-            quantity: item.quantity,
-            image: item.product.imageUrl,
-          }));
-          const orderData = {
-            items: orderItems,
-            total: total,
-          };
-          await ordersAPI.createOrder(orderData);
-          setToastMessage('Order placed successfully! Redirecting to order history.');
-          setShowToast(true);
-          await cartAPI.clearCart();
-          setCart([]);
-          setTimeout(() => {
-            setShowToast(false);
-            window.location.href = '/order-history';
-          }, 3000);
-        } catch (error) {
-          console.error('Failed to place order:', error);
-        }
-      });
+      setShowPaymentModal(true);
     }
+  };
+
+  const handleSendOtp = async () => {
+    if (!gmail || !gmail.includes('@gmail.com')) {
+      setPaymentError('Please enter a valid Gmail address.');
+      return;
+    }
+    if (!paymentMethod) {
+      setPaymentError('Please select a payment method.');
+      return;
+    }
+    try {
+      await otpAPI.sendOtp(gmail);
+      setOtpSent(true);
+      setPaymentError('');
+    } catch (error) {
+      setPaymentError('Failed to send OTP. Please try again.');
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      setPaymentError('Please enter the OTP.');
+      return;
+    }
+    try {
+      await otpAPI.verifyOtp(gmail, otp);
+      // OTP verified, proceed to place order
+      await placeOrder();
+    } catch (error) {
+      setPaymentError('Invalid OTP. Please try again.');
+    }
+  };
+
+  const placeOrder = async () => {
+    try {
+      const orderItems = cart.map(item => ({
+        product: item.product._id,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+        image: item.product.imageUrl,
+      }));
+      const orderData = {
+        items: orderItems,
+        total: total,
+        paymentMethod,
+        gmail,
+      };
+      await ordersAPI.createOrder(orderData);
+      setToastMessage('Order placed successfully! Redirecting to order history.');
+      setShowToast(true);
+      await cartAPI.clearCart();
+      setCart([]);
+      setShowPaymentModal(false);
+      setTimeout(() => {
+        setShowToast(false);
+        window.location.href = '/order-history';
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to place order:', error);
+      setPaymentError('Failed to place order. Please try again.');
+    }
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPaymentMethod('');
+    setGmail('');
+    setOtp('');
+    setOtpSent(false);
+    setPaymentError('');
   };
 
   const showConfirmationModal = (message, callback) => {
@@ -126,6 +179,74 @@ const Cart = () => {
             <div className="mt-4 flex justify-end space-x-2">
               <button onClick={hideConfirmationModal} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
               <button onClick={handleConfirm} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-green focus:border-brand-green"
+                >
+                  <option value="">Select Payment Method</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Debit Card">Debit Card</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Net Banking">Net Banking</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Gmail Address</label>
+                <input
+                  type="email"
+                  value={gmail}
+                  onChange={(e) => setGmail(e.target.value)}
+                  placeholder="yourname@gmail.com"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-green focus:border-brand-green"
+                />
+              </div>
+              {!otpSent ? (
+                <button
+                  onClick={handleSendOtp}
+                  className="w-full bg-brand-green text-white py-2 px-4 rounded-md hover:bg-green-600"
+                >
+                  Send OTP
+                </button>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Enter OTP</label>
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="Enter 6-digit OTP"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-green focus:border-brand-green"
+                    />
+                  </div>
+                  <button
+                    onClick={handleVerifyOtp}
+                    className="w-full bg-brand-green text-white py-2 px-4 rounded-md hover:bg-green-600"
+                  >
+                    Verify OTP & Pay
+                  </button>
+                </>
+              )}
+              {paymentError && (
+                <p className="text-red-500 text-sm">{paymentError}</p>
+              )}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button onClick={closePaymentModal} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
             </div>
           </div>
         </div>

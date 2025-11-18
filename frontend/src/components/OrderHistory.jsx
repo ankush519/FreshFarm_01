@@ -32,7 +32,7 @@ const OrderHistory = () => {
           {orders.map((order, index) => (
             <div key={index} className="border border-gray-200 rounded-lg p-4">
               <h3 className="text-xl font-semibold mb-2">Order #{index + 1}</h3>
-              <p className="text-sm text-gray-600 mb-2">Placed on: {new Date(order.date).toLocaleString()}</p>
+              <p className="text-sm text-gray-600 mb-2">Placed on: {new Date(order.createdAt).toLocaleString()}</p>
               <div className="space-y-2">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-center">

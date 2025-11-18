@@ -374,7 +374,7 @@ const FarmerDashboard = () => {
                     }`}>
                       {order.status}
                     </span>
-                    <p className="text-sm text-gray-500 mt-1">{order.date}</p>
+                    <p className="text-sm text-gray-500 mt-1">{new Date(order.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
               ))}

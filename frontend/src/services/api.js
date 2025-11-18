@@ -177,3 +177,30 @@ export const ordersAPI = {
     return await response.json();
   },
 };
+
+// OTP API
+export const otpAPI = {
+  sendOtp: async (gmail) => {
+    const response = await authFetch('/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ gmail }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to send OTP');
+    }
+    return await response.json();
+  },
+
+  verifyOtp: async (gmail, otp) => {
+    const response = await authFetch('/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ gmail, otp }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to verify OTP');
+    }
+    return await response.json();
+  },
+};

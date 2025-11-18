@@ -22,7 +22,7 @@ const FreshProduct = () => {
         // Fallback to default products if API fails
         setProducts([
           {
-            id: 1,
+            _id: 'fallback-1',
             name: 'Fresh Tomatoes',
             category: 'Vegetables',
             price: 40,
@@ -32,7 +32,7 @@ const FreshProduct = () => {
             organic: true
           },
           {
-            id: 2,
+            _id: 'fallback-2',
             name: 'Organic Spinach',
             category: 'Vegetables',
             price: 25,

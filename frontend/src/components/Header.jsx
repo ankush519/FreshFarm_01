@@ -26,15 +26,22 @@ const Header = () => {
 
   useEffect(() => {
     const updateCartCount = async () => {
-      try {
-        const cartData = await cartAPI.getCart();
-        const count = cartData.items ? cartData.items.length : 0;
-        setCartCount(count);
-      } catch (error) {
-        console.error('Failed to fetch cart count:', error);
+      const token = localStorage.getItem("token");
+
+      // Prevent calling /api/cart without token (fixes 401 spam)
+      if (!token) {
         setCartCount(0);
+        return;
+      }
+
+      try {
+        const cart = await cartAPI.getCart();
+        setCartCount(cart?.items?.length || 0);
+      } catch (error) {
+        console.error("Failed to fetch cart count:", error.message);
       }
     };
+
     updateCartCount();
     const interval = setInterval(updateCartCount, 1000);
     return () => clearInterval(interval);
@@ -138,35 +145,35 @@ const Header = () => {
               <i className="fas fa-map-marker-alt"></i>
               <span>Punjab, PB</span>
             </a>
-          {localStorage.getItem('token') ? (
-            <>
-              <button onClick={() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.reload();
-              }} className="nav-link flex items-center space-x-2">
-                <i className="fas fa-sign-out-alt"></i>
-                <span className="hidden lg:inline ml-2">Logout</span>
+            {localStorage.getItem('token') ? (
+              <>
+                <button onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
+                  window.location.reload();
+                }} className="nav-link flex items-center space-x-2">
+                  <i className="fas fa-sign-out-alt"></i>
+                  <span className="hidden lg:inline ml-2">Logout</span>
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setShowLoginModal(true)} className="nav-link">
+                <i className="fas fa-user"></i>
+                <span className="hidden lg:inline ml-2">Sign In</span>
               </button>
-            </>
-          ) : (
-            <button onClick={() => setShowLoginModal(true)} className="nav-link">
-              <i className="fas fa-user"></i>
-              <span className="hidden lg:inline ml-2">Sign In</span>
-            </button>
-          )}
-          <Link to="/cart" className="nav-link relative">
-            <i className="fas fa-shopping-cart"></i>
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-brand-orange text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {cartCount}
-              </span>
             )}
-          </Link>
-          <Link to="/farmer-dashboard" className="hidden sm:inline-block btn btn-primary text-sm px-4 py-2">Join as Farmer</Link>
-          <button id="mobile-menu-button" onClick={toggleMobileMenu} className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-green">
-            <i className="fas fa-bars text-xl"></i>
-          </button>
+            <Link to="/cart" className="nav-link relative">
+              <i className="fas fa-shopping-cart"></i>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-brand-orange text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            <Link to="/farmer-dashboard" className="hidden sm:inline-block btn btn-primary text-sm px-4 py-2">Join as Farmer</Link>
+            <button id="mobile-menu-button" onClick={toggleMobileMenu} className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-green">
+              <i className="fas fa-bars text-xl"></i>
+            </button>
           </div>
         </nav>
         {/* Mobile Menu */}
@@ -216,7 +223,7 @@ const Header = () => {
                 window.location.reload();
               }} className="block nav-link font-medium">Logout</button>
             ) : (
-              <button onClick={() => {setMobileMenuOpen(false); setShowLoginModal(true);}} className="block nav-link font-medium">Sign In</button>
+              <button onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true); }} className="block nav-link font-medium">Sign In</button>
             )}
             <Link to="/farmer-dashboard" className="block sm:hidden btn btn-primary mt-2" onClick={() => setMobileMenuOpen(false)}>Join as Farmer</Link>
           </div>
@@ -250,7 +257,7 @@ const Header = () => {
             </form>
             <p className="text-sm text-center mt-4 text-gray-600">
               Don't have an account?
-              <button onClick={() => {setShowLoginModal(false); setShowSignUpModal(true);}} className="text-brand-orange font-medium hover:underline">Sign Up</button>
+              <button onClick={() => { setShowLoginModal(false); setShowSignUpModal(true); }} className="text-brand-orange font-medium hover:underline">Sign Up</button>
             </p>
           </div>
         </div>
@@ -292,7 +299,7 @@ const Header = () => {
             </form>
             <p className="text-sm text-center mt-4 text-gray-600">
               Already have an account?
-              <button onClick={() => {setShowSignUpModal(false); setShowLoginModal(true);}} className="text-brand-orange font-medium hover:underline">Sign In</button>
+              <button onClick={() => { setShowSignUpModal(false); setShowLoginModal(true); }} className="text-brand-orange font-medium hover:underline">Sign In</button>
             </p>
           </div>
         </div>
